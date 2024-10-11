@@ -1,0 +1,69 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Team {
+  id       Int      @id @default(autoincrement())
+  name     String   @unique
+  members  TeamMember[]
+  scores   Score[]
+  ranking  Ranking? @relation("TeamRanking")
+}
+
+model Member {
+  id       Int      @id @default(autoincrement())
+  name     String
+  teams    TeamMember[]
+}
+
+model TeamMember {
+  id        Int     @id @default(autoincrement())
+  teamId    Int
+  memberId  Int
+  team      Team    @relation(fields: [teamId], references: [id])
+  member    Member  @relation(fields: [memberId], references: [id])
+}
+
+model Mission {
+  id          Int    @id @default(autoincrement())
+  name        String @unique
+  maxScore    Int    // Pontuação máxima para a missão
+  scores      Score[]
+}
+
+model Score {
+  id              Int      @id @default(autoincrement())
+  teamId          Int
+  missionId       Int
+  team            Team     @relation(fields: [teamId], references: [id])
+  mission         Mission  @relation(fields: [missionId], references: [id])
+  points          Int      @default(0) // Pontuação obtida na missão
+  precisionDisks  Int      @default(0) // Discos de Precisão (0-50 pontos extras)
+  timeMinutes     Int      @default(0) // Minutos que a equipe levou para concluir
+  timeSeconds     Int      @default(0) // Segundos que a equipe levou para concluir
+  observations    String?  // Observações opcionais para cada missão
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Ranking {
+  id             Int      @id @default(autoincrement())
+  teamId         Int      @unique
+  team           Team     @relation("TeamRanking", fields: [teamId], references: [id])
+  totalScore     Int      @default(0)  // Pontuação total da equipe
+  precisionDisks Int      @default(0)  // Número de discos de precisão restantes
+  timeMinutes    Int      @default(0)  // Minutos que a equipe levou para completar as missões
+  timeSeconds    Int      @default(0)  // Segundos que a equipe levou para completar as missões
+  createdAt      DateTime @default(now())
+}
